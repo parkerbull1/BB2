@@ -1,5 +1,5 @@
-<robot name="block">
-  <link name="sphere">
+<robot name="reference">
+  <link name="reference">
     <inertial>
       <origin xyz="0.025 0.025 0.025" />
       <mass value="0.5" />
@@ -8,18 +8,18 @@
     <visual>
       <origin xyz="0.025 0.025 0.025"/>
       <geometry>
-        <sphere radius="0.025" />
+        <cylinder length="0.01" radius="0.025" />
       </geometry>
     </visual>
     <collision>
       <origin xyz="0.025 0.025 0.025"/>
       <geometry>
-        <sphere radius="0.025" />
+        <cylinder length="0.01" radius="0.025" />
       </geometry>
     </collision>
   </link>
-  <gazebo reference="sphere">
-    <material>Gazebo/Blue</material>
+  <gazebo reference="reference">
+    <material>Gazebo/Green</material>
      <mu1>1000</mu1>
      <mu2>1000</mu2>
   </gazebo>
