@@ -45,7 +45,7 @@ class image_converter:
 
     def __init__(self):        
 	self.image_pub = rospy.Publisher("Camera", Image, queue_size=10)
-        self.image_sub = rospy.Subscriber("/cameras/right_hand_camera/image", Image, self.Callback)
+        self.image_sub = rospy.Subscriber("/cameras/left_hand_camera/image", Image, self.Callback)
 	self.bridge = CvBridge()
 
     def Callback(self,data):
@@ -54,15 +54,26 @@ class image_converter:
         except CvBridgeError as e:
 	    print(e)
 
-        #masking can go here
+        red_low = np.array([0, 0, 0])
+	red_high = np.array([15, 15, 255])
+	resized = cv2.resize(cv_image, (25, 25), interpolation = cv2.INTER_AREA)
 
-        cv2.imshow("Camera Feed", cv_image)
+	red_mask = cv2.inRange(resized, red_low, red_high)
+	red_out = cv2.bitwise_and(resized, resized, red_mask, red_mask)
+	redout = cv2.resize(red_out, (800, 800), interpolation = cv2.INTER_AREA)
+
+        
 	
 	try:
 	    self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
 	except CvBridgeError as e:
 	    print(e)
 
+	
+
+	cv2.imshow("Camera Feed", cv_image)
+	cv2.imshow("Red Mask", redout)
+	#print(cv_image[300, 440])
 	cv2.waitKey(3)
 
 	
