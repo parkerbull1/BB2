@@ -185,6 +185,8 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.8, y=0.3, z=0.0)),
                        table_reference_frame="world",
 		       sphere_pose=Pose(position=Point(x=0.4725, y=0.1265, z=0.7825)),
                        sphere_reference_frame="world",
+		       reference_pose=Pose(position=Point(x=0.775, y=0.275, z=0.7825)),
+                       reference_reference_frame="world",
                        block_pose=Pose(position=Point(x=0.4725, y=0.4265, z=0.7825)),
                        block_reference_frame="world"):
     # Get Models' Path
@@ -197,6 +199,10 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.8, y=0.3, z=0.0)),
     sphere_xml = ''
     with open (model_path + "sphere/model.urdf", "r") as sphere_file:
         sphere_xml=sphere_file.read().replace('\n', '')
+    # Load Sphere URDF
+    reference_xml = ''
+    with open (model_path + "reference/model.urdf", "r") as reference_file:
+        reference_xml=reference_file.read().replace('\n', '')
     # Load Block URDF
     block_xml = ''
     with open (model_path + "block/model.urdf", "r") as block_file:
@@ -225,6 +231,14 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=0.8, y=0.3, z=0.0)),
                                sphere_pose, sphere_reference_frame)
     except rospy.ServiceException, e:
         rospy.logerr("Spawn URDF service call failed: {0}".format(e))
+    # Spawn reference URDF
+    rospy.wait_for_service('/gazebo/spawn_urdf_model')
+    try:
+        spawn_urdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
+        resp_urdf = spawn_urdf("reference", reference_xml, "/",
+                               reference_pose, reference_reference_frame)
+    except rospy.ServiceException, e:
+        rospy.logerr("Spawn URDF service call failed: {0}".format(e))
 
 def delete_gazebo_models():
     # This will be called on ROS Exit, deleting Gazebo models
@@ -236,6 +250,7 @@ def delete_gazebo_models():
         resp_delete = delete_model("cafe_table")
         resp_delete = delete_model("block")
 	resp_delete = delete_model("sphere")
+	resp_delete = delete_model("reference")
     except rospy.ServiceException, e:
         rospy.loginfo("Delete Model service call failed: {0}".format(e))
 
