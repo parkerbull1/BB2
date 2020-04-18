@@ -181,9 +181,11 @@ class PickAndPlace(object):
         # retract to clear object
         self._retract()
 
-def load_gazebo_models(table_pose=Pose(position=Point(x=1.0, y=0.0, z=0.0)),
+def load_gazebo_models(table_pose=Pose(position=Point(x=0.8, y=0.3, z=0.0)),
                        table_reference_frame="world",
-                       block_pose=Pose(position=Point(x=0.6725, y=0.1265, z=0.7825)),
+		       sphere_pose=Pose(position=Point(x=0.4725, y=0.1265, z=0.7825)),
+                       sphere_reference_frame="world",
+                       block_pose=Pose(position=Point(x=0.4725, y=0.4265, z=0.7825)),
                        block_reference_frame="world"):
     # Get Models' Path
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
@@ -191,6 +193,10 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=1.0, y=0.0, z=0.0)),
     table_xml = ''
     with open (model_path + "cafe_table/model.sdf", "r") as table_file:
         table_xml=table_file.read().replace('\n', '')
+    # Load Sphere URDF
+    sphere_xml = ''
+    with open (model_path + "sphere/model.urdf", "r") as sphere_file:
+        sphere_xml=sphere_file.read().replace('\n', '')
     # Load Block URDF
     block_xml = ''
     with open (model_path + "block/model.urdf", "r") as block_file:
@@ -211,6 +217,14 @@ def load_gazebo_models(table_pose=Pose(position=Point(x=1.0, y=0.0, z=0.0)),
                                block_pose, block_reference_frame)
     except rospy.ServiceException, e:
         rospy.logerr("Spawn URDF service call failed: {0}".format(e))
+    # Spawn sphere URDF
+    rospy.wait_for_service('/gazebo/spawn_urdf_model')
+    try:
+        spawn_urdf = rospy.ServiceProxy('/gazebo/spawn_urdf_model', SpawnModel)
+        resp_urdf = spawn_urdf("sphere", sphere_xml, "/",
+                               sphere_pose, sphere_reference_frame)
+    except rospy.ServiceException, e:
+        rospy.logerr("Spawn URDF service call failed: {0}".format(e))
 
 def delete_gazebo_models():
     # This will be called on ROS Exit, deleting Gazebo models
@@ -221,6 +235,7 @@ def delete_gazebo_models():
         delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
         resp_delete = delete_model("cafe_table")
         resp_delete = delete_model("block")
+	resp_delete = delete_model("sphere")
     except rospy.ServiceException, e:
         rospy.loginfo("Delete Model service call failed: {0}".format(e))
 
@@ -262,16 +277,16 @@ def main():
     pnp = PickAndPlace(limb, hover_distance)
     # An orientation for gripper fingers to be overhead and parallel to the obj
     overhead_orientation = Quaternion(
-                             x=-0.0249590815779,
-                             y=0.999649402929,
-                             z=0.00737916180073,
-                             w=0.00486450832011)
+                             x=0.0,
+                             y=1,
+                             z=0.0,
+                             w=0.0)
     block_poses = list()
     # The Pose of the block in its initial location.
     # You may wish to replace these poses with estimates
     # from a perception node.
-    block_poses.append(Pose(
-        position=Point(x=0.7, y=0.15, z=-0.129),
+    block_poses.append(Pose(				#Overhead View
+        position=Point(x=0.8, y=0.29, z=0.26),
         orientation=overhead_orientation))
     # Feel free to add additional desired poses for the object.
     # Each additional pose will get its own pick and place.
@@ -280,14 +295,24 @@ def main():
         orientation=overhead_orientation))
     # Move to the desired starting angles
     pnp.move_to_start(starting_joint_angles)
-    idx = 0
+    
     while not rospy.is_shutdown():
-        print("\nPicking...")
-        pnp.pick(block_poses[idx])
-        print("\nPlacing...")
-        idx = (idx+1) % len(block_poses)
-        pnp.place(block_poses[idx])
+        pnp._servo_to_pose(block_poses[0]) #Move to overhead view
+	rospy.spin()
     return 0
+    
+
+
+
+
+    #idx = 0
+    #while not rospy.is_shutdown():
+        #print("\nPicking...")
+        #pnp.pick(block_poses[idx])
+        #print("\nPlacing...")
+        #idx = (idx+1) % len(block_poses)
+        #pnp.place(block_poses[idx])
+    #return 0
 
 if __name__ == '__main__':
     sys.exit(main())
