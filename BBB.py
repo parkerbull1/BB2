@@ -181,13 +181,13 @@ class PickAndPlace(object):
         # retract to clear object
         self._retract()
 
-def load_gazebo_models(table_pose=Pose(position=Point(x=0.8, y=0.3, z=0.0)),
+def load_gazebo_models(table_pose=Pose(position=Point(x=0.9, y=0.3, z=0.0)),
                        table_reference_frame="world",
-		       sphere_pose=Pose(position=Point(x=0.4725, y=0.1265, z=0.7825)),
+		       sphere_pose=Pose(position=Point(x=0.5725, y=0.1265, z=0.7825)),
                        sphere_reference_frame="world",
-		       reference_pose=Pose(position=Point(x=0.775, y=0.275, z=0.7825)),
+		       reference_pose=Pose(position=Point(x=0.875, y=0.275, z=0.7825)),
                        reference_reference_frame="world",
-                       block_pose=Pose(position=Point(x=0.4725, y=0.4265, z=0.7825)),
+                       block_pose=Pose(position=Point(x=0.5725, y=0.4265, z=0.7825)),
                        block_reference_frame="world"):
     # Get Models' Path
     model_path = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
@@ -296,20 +296,26 @@ def main():
                              y=1,
                              z=0.0,
                              w=0.0)
+
+    flat_orientation = Quaternion(
+                             x=0.0,
+                             y=0.7071068,
+                             z=0.0,
+                             w=0.7071068)
     block_poses = list()
     # The Pose of the block in its initial location.
     # You may wish to replace these poses with estimates
     # from a perception node.
-    block_poses.append(Pose(				#Overhead View
-        position=Point(x=0.8, y=0.29, z=0.26),
-        orientation=overhead_orientation))
+    block_poses.append(Pose(				
+        position=Point(x=0.5, y=0.29, z=-0.08),			#Flat View
+        orientation=flat_orientation))
     # Feel free to add additional desired poses for the object.
     # Each additional pose will get its own pick and place.
     block_poses.append(Pose(
-        position=Point(x=0.75, y=0.0, z=-0.129),
+        position=Point(x=0.84, y=0.29, z=0.26),			#Overhead View
         orientation=overhead_orientation))
     # Move to the desired starting angles
-    pnp.move_to_start(starting_joint_angles)
+    #pnp.move_to_start(starting_joint_angles)
     
     while not rospy.is_shutdown():
         pnp._servo_to_pose(block_poses[0]) #Move to overhead view
